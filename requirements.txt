@@ -5,3 +5,13 @@ autopep8
 # Web framework
 streamlit
 requests
+Pillow
+
+# Mouse automation
+pyautogui
+
+# Video downloading
+yt-dlp
+
+# Browser automation
+selenium
