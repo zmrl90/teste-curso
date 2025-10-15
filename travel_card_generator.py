@@ -1,148 +1,109 @@
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont, ExifTags
-import requests
-from io import BytesIO
-import textwrap
+from PIL import Image, ImageDraw, ImageFont
+import io
 
-st.set_page_config(page_title="Gerador de Card - Viagens", layout="centered")
+# -------- FUNÇÃO PARA CARREGAR A FONTE --------
+def load_font(size):
+    return ImageFont.truetype("Montserrat-Regular.ttf", size)
 
-# ---------- Funções auxiliares ----------
-def fix_image_orientation(image):
-    try:
-        for orientation in ExifTags.TAGS.keys():
-            if ExifTags.TAGS[orientation] == 'Orientation':
-                break
-        exif = image._getexif()
-        if exif is not None:
-            orientation_value = exif.get(orientation)
-            if orientation_value == 3:
-                image = image.rotate(180, expand=True)
-            elif orientation_value == 6:
-                image = image.rotate(270, expand=True)
-            elif orientation_value == 8:
-                image = image.rotate(90, expand=True)
-    except Exception:
-        pass
-    return image
+# -------- FUNÇÃO PRINCIPAL --------
+def criar_card(fundo: Image.Image,
+               titulo: str,
+               destino: str,
+               preco: str,
+               extras: list,
+               formato: str):
+    if formato == "Feed (1080x1080)":
+        W, H = 1080, 1080
+    else:
+        W, H = 1080, 1920
 
-def draw_centered(draw, text, font, x, y, color):
-    w, h = draw.textbbox((0, 0), text, font=font)[2:]
-    draw.text((x - w / 2, y), text, font=font, fill=color)
+    # Ajustar imagem de fundo (cover)
+    fundo = fundo.copy()
+    fundo_ratio = fundo.width / fundo.height
+    target_ratio = W / H
 
-def wrap_text(draw, text, font, max_width):
-    lines = []
-    words = text.split()
-    line = ""
-    for word in words:
-        test_line = line + word + " "
-        w, _ = draw.textbbox((0, 0), test_line, font=font)[2:]
-        if w < max_width:
-            line = test_line
-        else:
-            lines.append(line)
-            line = word + " "
-    lines.append(line)
-    return "\n".join(lines)
+    if fundo_ratio > target_ratio:
+        new_width = int(fundo.height * target_ratio)
+        offset = (fundo.width - new_width) // 2
+        fundo = fundo.crop((offset, 0, offset + new_width, fundo.height))
+    else:
+        new_height = int(fundo.width / target_ratio)
+        offset = (fundo.height - new_height) // 2
+        fundo = fundo.crop((0, offset, fundo.width, offset + new_height))
 
-# ---------- Interface ----------
-st.title("🧳 Gerador de Card de Viagem")
+    fundo = fundo.resize((W, H), Image.LANCZOS)
+    draw = ImageDraw.Draw(fundo)
 
-# Campos de input
-col1, col2 = st.columns(2)
+    # -------- CORES E FONTES --------
+    cor_texto = (0, 255, 179)  # verde neon
+    cor_sombra = (0, 0, 0, 200)
+    font_titulo = load_font(80 if formato.startswith("Feed") else 120)
+    font_destino = load_font(45 if formato.startswith("Feed") else 70)
+    font_preco = load_font(220 if formato.startswith("Feed") else 300)
+    font_extra = load_font(36 if formato.startswith("Feed") else 54)
 
-with col1:
-    subtitulo = st.text_input("Subtítulo", "Entre o sabor da pizza e a vista do Vesúvio – Nápoles encanta")
-    destino = st.text_input("Destino", "NÁPOLES")
-    preco = st.text_input("Preço", "409€")
-    cidade = st.text_input("Cidade de Partida", "Porto")
-    datas = st.text_input("Datas", "7 a 15 Março")
-    hotel = st.text_input("Hotel", "Hotel Herculaneum")
-    refeicao = st.text_input("Refeição", "Pequeno Almoço")
-    bagagem = st.text_input("Bagagem", "Bagagem de mão")
-    transfer = st.text_input("Transfer", "Transfer In + Out")
+    # -------- POSIÇÕES (baseadas no template) --------
+    # Título – topo esquerdo
+    pos_titulo = (80, 80)
+    draw.text((pos_titulo[0]+3, pos_titulo[1]+3), titulo, font=font_titulo, fill=cor_sombra)
+    draw.text(pos_titulo, titulo, font=font_titulo, fill=cor_texto)
 
-with col2:
-    formato = st.selectbox("Formato", ["Feed 1080x1350", "Story 1080x1920", "Wide 1920x1080", "Quadrado 1080x1080"])
-    cor = st.color_picker("Cor principal", "#00FFAE")
-    image_file = st.file_uploader("📸 Upload da imagem de fundo", type=["jpg", "png", "jpeg"])
+    # Destino – logo abaixo do título
+    w_t, h_t = draw.textsize(titulo, font=font_titulo)
+    pos_destino = (80, pos_titulo[1] + h_t + 15)
+    draw.text((pos_destino[0]+2, pos_destino[1]+2), destino, font=font_destino, fill=cor_sombra)
+    draw.text(pos_destino, destino, font=font_destino, fill=cor_texto)
 
-if st.button("🎨 Gerar Card"):
-    # Tamanhos
-    formatos = {
-        "Feed 1080x1350": (1080, 1350),
-        "Story 1080x1920": (1080, 1920),
-        "Wide 1920x1080": (1920, 1080),
-        "Quadrado 1080x1080": (1080, 1080)
-    }
-    W, H = formatos[formato]
+    # Preço – grande, à direita e centrado verticalmente
+    w_p, h_p = draw.textsize(preco, font=font_preco)
+    x_prec = W - w_p - 100  # 100 px da margem direita
+    y_prec = (H // 2) - (h_p // 2) - 50
+    draw.text((x_prec+4, y_prec+4), preco, font=font_preco, fill=cor_sombra)
+    draw.text((x_prec, y_prec), preco, font=font_preco, fill=cor_texto)
 
-    # Carregar imagem
-    if image_file is None:
-        st.error("Por favor, faz upload de uma imagem de fundo.")
-        st.stop()
+    # Extras – linha única em baixo, centrada
+    extras_text = "   •   ".join(extras)
+    w_e, h_e = draw.textsize(extras_text, font=font_extra)
+    x_extras = (W - w_e) // 2
+    y_extras = H - h_e - 80
+    draw.text((x_extras+2, y_extras+2), extras_text, font=font_extra, fill=cor_sombra)
+    draw.text((x_extras, y_extras), extras_text, font=font_extra, fill=cor_texto)
 
-    bg = Image.open(image_file).convert("RGBA")
-    bg = fix_image_orientation(bg)
-    bg = bg.resize((W, H))
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 110))
-    bg = Image.alpha_composite(bg, overlay)
-    draw = ImageDraw.Draw(bg)
+    return fundo
 
-    # Fonte Montserrat
-    try:
-        font_url = "https://github.com/google/fonts/raw/main/ofl/montserrat/Montserrat-Bold.ttf"
-        font_bold = ImageFont.truetype(BytesIO(requests.get(font_url).content), 120)
-        font_regular = ImageFont.truetype(BytesIO(requests.get(font_url).content), 40)
-        font_small = ImageFont.truetype(BytesIO(requests.get(font_url).content), 30)
-    except Exception:
-        font_bold = ImageFont.load_default()
-        font_regular = ImageFont.load_default()
-        font_small = ImageFont.load_default()
+# -------- INTERFACE STREAMLIT --------
+st.set_page_config(page_title="Gerador de Card de Viagem", layout="centered")
 
-    # Topo
-    draw_centered(draw, "CONSULTOR INDEPENDENTE RNAVT3301", font_small, W // 2, 40, (255, 255, 255))
-    draw_centered(draw, "iCliGo travel consultant", font_small, W // 2, 80, (255, 255, 255))
+st.title("🌴 Gerador de Card de Viagem")
 
-    # Subtítulo
-    texto_subtitulo = wrap_text(draw, subtitulo.upper(), font_small, W - 200)
-    draw.multiline_text((W // 2 - 400, H * 0.22), texto_subtitulo, fill=(255, 255, 255), font=font_small, align="center")
+f_upload = st.file_uploader("📸 Escolhe a imagem de fundo", type=["jpg","jpeg","png"])
+if f_upload:
+    img = Image.open(f_upload).convert("RGB")
 
-    # Destino
-    draw_centered(draw, destino.upper(), font_bold, W // 2, int(H * 0.30), tuple(int(cor.lstrip("#")[i:i+2], 16) for i in (0, 2, 4)))
+    st.markdown("### ✍️ Informações do Card")
+    titulo = st.text_input("Título principal", "CONSULTOR INDEPENDENTE RNAVT 3301")
+    destino = st.text_input("Destino / Subtítulo", "Nápoles encanta")
+    preco = st.text_input("Preço", "409 €")
+    extras = st.text_area("Extras (1 por linha)", "Hotel Herculaneum\nPequeno-almoço\nTransfer in + out")
+    lista_extras = [x.strip() for x in extras.split("\n") if x.strip()]
 
-    # Preço
-    draw_centered(draw, "DESDE", font_small, W // 2, int(H * 0.48), (255, 255, 255))
-    draw_centered(draw, preco, font_bold.font_variant(size=160), W // 2, int(H * 0.52), tuple(int(cor.lstrip("#")[i:i+2], 16) for i in (0, 2, 4)))
-    draw_centered(draw, "POR PESSOA", font_small, W // 2, int(H * 0.67), (255, 255, 255))
+    formato = st.radio("Formato do card", ["Feed (1080x1080)", "Story (1080x1920)"])
 
-    # Ícones
-    icons = ["✈️", "🏨", "🍽️", "🧳", "🚐"]
-    texts = [
-        f"{cidade}\n{datas}",
-        f"HOTEL\n{hotel}",
-        refeicao,
-        bagagem,
-        transfer
-    ]
-    y_icons = int(H * 0.78)
-    for i in range(5):
-        x = int(W * (i + 0.5) / 5)
-        draw_centered(draw, icons[i], font_regular.font_variant(size=80), x, y_icons, tuple(int(cor.lstrip("#")[i:i+2], 16) for i in (0, 2, 4)))
-        draw.multiline_text((x - 120, y_icons + 80), texts[i].upper(), fill=(255, 255, 255), font=font_small, align="center")
+    if st.button("🚀 Gerar Card"):
+        card = criar_card(img, titulo, destino, preco, lista_extras, formato)
+        st.image(card, use_container_width=True)
 
-    # Rodapé
-    draw_centered(draw, "VALOR BASEADO EM 2 ADULTOS. PREÇOS SUJEITOS A ALTERAÇÕES.", font_small, W // 2, H - 60, (255, 255, 255))
+        buf = io.BytesIO()
+        card.save(buf, format="PNG")
+        byte_im = buf.getvalue()
 
-    # Mostrar e permitir download
-    st.image(bg, caption="Pré-visualização do Card", use_container_width=True)
+        st.download_button(
+            label="💾 Download da Imagem",
+            data=byte_im,
+            file_name=f"card_viagem_{formato.replace(' ','_')}.png",
+            mime="image/png"
+        )
 
-    buf = BytesIO()
-    bg.convert("RGB").save(buf, format="PNG")
-    st.download_button(
-        label="⬇️ Fazer download do card",
-        data=buf.getvalue(),
-        file_name=f"card_{destino.lower()}.png",
-        mime="image/png"
-    )
 
 
