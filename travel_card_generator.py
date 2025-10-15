@@ -149,9 +149,9 @@ if submit:
         
         # Código HTML do card
         html_code = f"""
-        <div style="position:relative;width:1080px;height:1440px;
+        <div style="position:relative;width:1080px;height:1080px;
                     background-image:url('{imagem_bg}');
-                    background-size:1440px 1080px;background-position:center;
+                    background-size:cover;background-position:center;
                     color:white;display:flex;flex-direction:column;
                     justify-content:space-between;text-align:center;">
           <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>
@@ -202,12 +202,17 @@ if submit:
         </div>
         """
 
+        # Mostrar o código HTML gerado
+        st.markdown("### 📋 Código HTML Gerado:")
+        st.code(html_code, language="html")
 
         # Mostrar a pré-visualização
         st.markdown("### 💻 Pré-visualização do Card:")
         st.components.v1.html(html_code, height=1200)
         
-
+        # Botão para copiar o código
+        st.markdown("### 📋 Copiar Código")
+        st.code(html_code, language="html")
         
     else:
         st.error("❌ Por favor, preencha todos os campos obrigatórios!")
