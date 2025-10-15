@@ -208,28 +208,46 @@ with st.form("inputs"):
 
     submit = st.form_submit_button("🎨 Gerar e Pré-visualizar")
 
+from PIL import ExifTags
+
 # --------------------
-# Process & Render
+# Process & Render (versão corrigida)
 # --------------------
 if submit:
-    # presets
     preset = PRESETS[fmt]
     (W, H) = preset["size"]
     F = preset["font_sizes"]
     P = preset["positions"]
 
-    # load background
+    # --- carregar imagem com orientação EXIF corrigida ---
     try:
         if upload is not None:
-            bg = Image.open(upload).convert("RGBA")
+            bg = Image.open(upload)
         else:
             resp = requests.get(image_url, timeout=15); resp.raise_for_status()
-            bg = Image.open(BytesIO(resp.content)).convert("RGBA")
+            bg = Image.open(BytesIO(resp.content))
+
+        # corrigir orientação EXIF
+        try:
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = dict(bg._getexif().items())
+            if exif[orientation] == 3:
+                bg = bg.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                bg = bg.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                bg = bg.rotate(90, expand=True)
+        except Exception:
+            pass
+
+        bg = bg.convert("RGBA")
     except Exception as e:
         st.error(f"Erro ao carregar imagem de fundo: {e}")
         st.stop()
 
-    # cover fit
+    # --- redimensionar e recortar (cover) ---
     bg_ratio = bg.width / bg.height
     target_ratio = W / H
     if bg_ratio > target_ratio:
@@ -240,77 +258,69 @@ if submit:
     left = (new_w - W) // 2; top = (new_h - H) // 2
     bg = bg.crop((left, top, left + W, top + H))
 
-    # overlay
-    overlay = Image.new("RGBA", (W, H), (0,0,0,120))
+    # --- overlay ligeiro ---
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 100))
     canvas = Image.alpha_composite(bg, overlay)
     draw = ImageDraw.Draw(canvas)
 
-    # fonts
-    try:
-        f_top  = ImageFont.truetype(download_font(FONT_URLS["regular"]), size=F["top_small"])
-        f_sub  = ImageFont.truetype(download_font(FONT_URLS["regular"]), size=F["subtitle"])
-        f_dest = ImageFont.truetype(download_font(FONT_URLS["bold"]),    size=F["destination"])
-        f_price= ImageFont.truetype(download_font(FONT_URLS["bold"]),    size=F["price"])
-        f_plab = ImageFont.truetype(download_font(FONT_URLS["semibold"]),size=F["price_label"])
-        f_pby  = ImageFont.truetype(download_font(FONT_URLS["regular"]), size=F["price_by"])
-        f_ic   = ImageFont.truetype(download_font(FONT_URLS["regular"]), size=F["icons"])
-        f_icm  = ImageFont.truetype(download_font(FONT_URLS["semibold"]),size=F["icons_emoji"])
-        f_foot = ImageFont.truetype(download_font(FONT_URLS["regular"]), size=F["footer"])
-    except Exception:
-        ff = load_fonts()
-        f_top=f_sub=f_pby=f_ic=f_foot=ff["reg"]; f_dest=f_price=ff["bold"]; f_plab=f_icm=ff["sem"]
+    # --- tamanhos absolutos de fonte (não dependem do Streamlit scale) ---
+    def load_font_fixed(url, size):
+        return ImageFont.truetype(BytesIO(requests.get(url, timeout=15).content), size=size)
+
+    f_top  = load_font_fixed(FONT_URLS["regular"], F["top_small"])
+    f_sub  = load_font_fixed(FONT_URLS["regular"], F["subtitle"])
+    f_dest = load_font_fixed(FONT_URLS["bold"],    F["destination"])
+    f_price= load_font_fixed(FONT_URLS["bold"],    F["price"])
+    f_plab = load_font_fixed(FONT_URLS["semibold"],F["price_label"])
+    f_pby  = load_font_fixed(FONT_URLS["regular"], F["price_by"])
+    f_ic   = load_font_fixed(FONT_URLS["regular"], F["icons"])
+    f_icm  = load_font_fixed(FONT_URLS["semibold"],F["icons_emoji"])
+    f_foot = load_font_fixed(FONT_URLS["regular"], F["footer"])
 
     accent_rgb = tuple(int(color_accent.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
-    # TOP
+    # --- topo fixo ---
     draw_centered(draw, "CONSULTOR INDEPENDENTE RNAVT3301", f_top, W//2, P["top_y"], fill=(255,255,255))
     draw_centered(draw, "iCliGo travel consultant", f_top, W//2, P["top_y"] + int(F["top_small"]*1.6), fill=(255,255,255))
 
-    # SUBTITLE (wrap)
-    subtitle_wrapped = "\n".join(textwrap.wrap(subtitle.upper(), width=38))
+    # --- subtítulo ---
+    subtitle_wrapped = "\n".join(textwrap.wrap(subtitle.upper(), width=40))
     draw_centered(draw, subtitle_wrapped, f_sub, W//2, P["subtitle_y"], fill=(255,255,255))
 
-    # DESTINATION (≈200–240 px)
+    # --- destino (grande, 200–240px fixos) ---
     draw_centered(draw, destination.upper(), f_dest, W//2, P["destination_y"], fill=accent_rgb, stroke_width=3)
 
-    # PRICE block (direita)
+    # --- preço à direita ---
     cx = P["price_center_x"]
     y0 = P["price_block_top_y"]
     draw_centered(draw, price_label.upper(), f_plab, cx, y0, fill=(255,255,255))
-    # preço
     _, hp = draw_centered(draw, price, f_price, cx, y0 + int(F["price_label"]*0.2), fill=accent_rgb, stroke_width=3)
-    # por pessoa
     draw_centered(draw, price_by.upper(), f_pby, cx, y0 + int(F["price_label"]*0.2) + int(hp*0.75), fill=(255,255,255))
 
-    # ICONS row
+    # --- ícones e rodapé (mantidos iguais) ---
     icon_texts = [
         (f"{origin}\n{dates}", "✈️"),
-        (f"{hotel}", "🏨"),
+        (hotel, "🏨"),
         (meal, "🍽️"),
         (baggage, "🧳"),
         (transfer, "🚐"),
     ]
-    n = len(icon_texts); spacing = W // n
+    n = len(icon_texts)
+    spacing = W // n
     for i, (txt, ic) in enumerate(icon_texts):
         xc = spacing * i + spacing//2
-        draw_centered(draw, ic, f_icm, xc, P["icons_y"]-F["icons_emoji"], fill=accent_rgb)
-        lines = txt.upper()
-        w,_ = text_size(draw, lines, f_ic)
-        draw.multiline_text((xc - w/2, P["icons_y"]), lines, font=f_ic, fill=(255,255,255), align="center",
+        draw_centered(draw, ic, f_icm, xc, P["icons_y"] - F["icons_emoji"], fill=accent_rgb)
+        draw.multiline_text((xc - text_size(draw, txt.upper(), f_ic)[0]/2, P["icons_y"]),
+                            txt.upper(), font=f_ic, fill=(255,255,255), align="center",
                             spacing=6, stroke_width=2, stroke_fill=(0,0,0))
 
-    # Footer
-    footer_text = "VALOR BASEADO EM 2 ADULTOS. PREÇOS SUJEITOS A ALTERAÇÕES."
-    draw_centered(draw, footer_text, f_foot, W//2, P["footer_y"], fill=(255,255,255))
+    draw_centered(draw, "VALOR BASEADO EM 2 ADULTOS. PREÇOS SUJEITOS A ALTERAÇÕES.", 
+                  f_foot, W//2, P["footer_y"], fill=(255,255,255))
 
-    # preview & download
+    # --- preview e download ---
     st.markdown("### Pré-visualização")
     st.image(canvas.convert("RGB"), use_container_width=True)
 
     buf = BytesIO()
-    canvas.convert("RGB").save(buf, format="PNG"); buf.seek(0)
-    st.download_button("⬇️ Fazer download do card (PNG)", data=buf,
-                       file_name=outfile_name or "card_viagem.png", mime="image/png")
-
-    st.success("Gerado com sucesso — com tamanhos e posições fixos por formato.")
-
+    canvas.convert("RGB").save(buf, format="PNG")
+    st.download_button("⬇️ Fazer download do card (PNG)", data=buf.getvalue(), file_name=outfile_name)
