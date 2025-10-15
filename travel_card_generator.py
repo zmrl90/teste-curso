@@ -27,7 +27,7 @@ with st.form("card_form"):
     with col1:
         consultor = st.text_input(
             "Nome do Consultor", 
-            value="Consultor Independente RNAVT 3301",
+            value="Consultor Independente RNAVT3301",
             help="Digite o nome ou identificação do consultor"
         )
     
@@ -142,14 +142,14 @@ if submit:
     st.markdown("---")
     
     # Verificar se todos os campos obrigatórios foram preenchidos
-    campos_obrigatorios = [subtitulo, destino, preco, cidade, datas, hotel, regime, bagagem, transfer]
+    campos_obrigatorios = [consultor, empresa, subtitulo, destino, preco, cidade, datas, hotel, regime, bagagem, transfer]
     
     if all(campos_obrigatorios):
         st.success("✅ Card gerado com sucesso!")
         
         # Código HTML do card
         html_code = f"""
-        <div style="position:relative;width:1080px;height:1080px;
+        <div style="position:relative;width:100%;height:1200px;
                     background-image:url('{imagem_bg}');
                     background-size:cover;background-position:center;
                     color:white;display:flex;flex-direction:column;
