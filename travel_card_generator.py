@@ -151,7 +151,7 @@ if submit:
         html_code = f"""
         <div style="position:relative;width:1080px;height:1440px;
                     background-image:url('{imagem_bg}');
-                    background-size:contain;background-position:center;
+                    background-size:1440px 1080px;background-position:center;
                     color:white;display:flex;flex-direction:column;
                     justify-content:space-between;text-align:center;">
           <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>
@@ -202,28 +202,4 @@ if submit:
         </div>
         """
 
-        # Mostrar o código HTML gerado
-        st.markdown("### 📋 Código HTML Gerado:")
-        st.code(html_code, language="html")
-
-        # Mostrar a pré-visualização
-        st.markdown("### 💻 Pré-visualização do Card:")
-        st.components.v1.html(html_code, height=1200)
         
-        # Botão para copiar o código
-        st.markdown("### 📋 Copiar Código")
-        st.code(html_code, language="html")
-        
-    else:
-        st.error("❌ Por favor, preencha todos os campos obrigatórios!")
-        st.info("💡 Todos os campos são necessários para criar o card. Verifique se não deixou nenhum vazio.")
-
-# Rodapé com dicas
-st.markdown("---")
-st.caption("""
-💡 **Dicas para usar a aplicação:**
-- Use letras maiúsculas para o destino para melhor resultado visual
-- Para a imagem de fundo, procure por fotos bonitas do destino no Google Imagens
-- Você pode copiar o código HTML gerado para usar em outros lugares
-- O card é otimizado para redes sociais e apresentações
-""")
