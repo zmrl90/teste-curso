@@ -12,8 +12,8 @@ st.title("🧳 Gerador de Card de Viagem")
 st.markdown("---")
 
 st.write("""
-**Esta aplicação gera automaticamente cards personalizados de viagens.**  
-Escolhe o formato, preenche os campos e faz download da imagem final.
+**Cria cards profissionais para divulgar viagens.**  
+Escolhe o formato, insere as informações e faz download da imagem final.
 """)
 
 # =========================
@@ -33,7 +33,7 @@ with st.form("card_form"):
 
     st.markdown("---")
 
-    # Campos do card
+    # Campos editáveis
     st.subheader("🌍 Informações do Destino")
     subtitulo = st.text_input("Frase de Apresentação", value="")
     destino = st.text_input("Destino", value="")
@@ -46,7 +46,7 @@ with st.form("card_form"):
     transfer = st.text_input("Transfer", value="")
     imagem_bg = st.text_input(
         "URL da Imagem de Fundo",
-        value="https://www.melhoresdestinos.com.br/wp-content/uploads/2020/12/quanto-custa-viajar-maldivas-capa2019-01.jpg"
+        value="https://upload.wikimedia.org/wikipedia/commons/8/86/Maldives_Beach.jpg"
     )
 
     submit = st.form_submit_button("🎨 Gerar Card", type="primary")
@@ -60,51 +60,60 @@ if submit:
     consultor = "Consultor Independente RNAVT3301"
     empresa = "iCliGo Travel Consultant"
 
-    # HTML do card
+    # HTML estilizado e mais responsivo
     html_code = f"""
-    <div style="position:relative;width:{largura}px;height:{altura}px;
-                background-image:url('{imagem_bg}');
-                background-size:cover;background-position:center;
-                color:white;display:flex;flex-direction:column;
-                justify-content:space-between;text-align:center;">
+    <div style="
+        position:relative;
+        width:{largura}px;
+        height:{altura}px;
+        background-image:url('{imagem_bg}');
+        background-size:cover;
+        background-position:center;
+        color:white;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+        text-align:center;
+        font-family:'Arial',sans-serif;">
+      
       <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>
 
       <div style="position:relative;padding-top:2rem;">
-        <p style="text-transform:uppercase;opacity:0.8;">{consultor}</p>
-        <p style="font-weight:300;font-size:1.2rem;">{empresa}</p>
+        <p style="text-transform:uppercase;opacity:0.8;font-size:0.9rem;">{consultor}</p>
+        <p style="font-weight:300;font-size:1.1rem;">{empresa}</p>
       </div>
 
       <div style="position:relative;margin-top:3rem;">
-        <p style="text-transform:uppercase;letter-spacing:0.2em;margin-bottom:0.5rem;">{subtitulo}</p>
-        <h1 style="font-size:5rem;font-weight:700;color:#00ffae;">{destino}</h1>
+        <p style="text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.5rem;font-size:1rem;">{subtitulo}</p>
+        <h1 style="font-size:4rem;font-weight:700;color:#00ffae;margin:0;">{destino}</h1>
       </div>
 
       <div style="position:relative;margin-top:1rem;">
         <p style="text-transform:uppercase;opacity:0.7;">Desde</p>
-        <p style="color:#00ffae;font-size:4rem;font-weight:800;">{preco}</p>
-        <p style="text-transform:uppercase;">Por pessoa</p>
+        <p style="color:#00ffae;font-size:3rem;font-weight:800;margin:0;">{preco}</p>
+        <p style="text-transform:uppercase;font-size:0.9rem;">Por pessoa</p>
       </div>
 
       <div style="position:relative;display:grid;grid-template-columns:repeat(5,1fr);
-                  gap:1rem;margin:3rem 0;text-transform:uppercase;font-size:0.9rem;">
+                  gap:0.5rem;margin:2rem 1rem;text-transform:uppercase;font-size:0.8rem;">
         <div>
-          <span style="font-size:2rem;color:#00ffae;">✈️</span>
+          <span style="font-size:1.8rem;color:#00ffae;">✈️</span>
           <p>{cidade}<br>{datas}</p>
         </div>
         <div>
-          <span style="font-size:2rem;color:#00ffae;">🏨</span>
+          <span style="font-size:1.8rem;color:#00ffae;">🏨</span>
           <p>Hotel<br>{hotel}</p>
         </div>
         <div>
-          <span style="font-size:2rem;color:#00ffae;">🍽️</span>
+          <span style="font-size:1.8rem;color:#00ffae;">🍽️</span>
           <p>{regime}</p>
         </div>
         <div>
-          <span style="font-size:2rem;color:#00ffae;">🧳</span>
+          <span style="font-size:1.8rem;color:#00ffae;">🧳</span>
           <p>{bagagem}</p>
         </div>
         <div>
-          <span style="font-size:2rem;color:#00ffae;">🚐</span>
+          <span style="font-size:1.8rem;color:#00ffae;">🚐</span>
           <p>{transfer}</p>
         </div>
       </div>
@@ -119,25 +128,38 @@ if submit:
     st.markdown("### 💻 Pré-visualização do Card:")
     st.components.v1.html(html_code, height=altura + 50)
 
-    # Tentar gerar imagem com PIL
+    # =========================
+    # DOWNLOAD DA IMAGEM
+    # =========================
     try:
-        bg_img = Image.open(requests.get(imagem_bg, stream=True).raw).convert("RGB")
-        bg_img = bg_img.resize((largura, altura))
+        # Valida e carrega imagem
+        response = requests.get(imagem_bg, stream=True)
+        response.raise_for_status()
+
+        # Verifica tipo de conteúdo
+        if "image" not in response.headers.get("Content-Type", ""):
+            raise ValueError("O link não parece ser uma imagem válida.")
+
+        img = Image.open(BytesIO(response.content)).convert("RGB")
+        img = img.resize((largura, altura))
+
         buffer = BytesIO()
-        bg_img.save(buffer, format="PNG")
+        img.save(buffer, format="PNG")
         buffer.seek(0)
 
         st.download_button(
-            label="📥 Fazer download da imagem",
+            label="📥 Fazer download da imagem de fundo",
             data=buffer,
             file_name=f"card_viagem_{destino or 'destino'}.png",
             mime="image/png"
         )
 
     except Exception as e:
-        st.error("⚠️ Não foi possível gerar a imagem de fundo para download.")
+        st.error("⚠️ Erro ao gerar imagem para download.")
         st.write(e)
 
+    # Código HTML gerado
     st.markdown("### 📋 Código HTML Gerado:")
     st.code(html_code, language="html")
+
 
