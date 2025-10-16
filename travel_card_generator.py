@@ -77,7 +77,7 @@ def cover_resize(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
     top = (new_h - target_h) // 2
     return img.crop((left, top, left + target_w, top + target_h))
 
-def fit_font_to_block(draw, text, url_bold, target_height, max_width, min_size=40, max_size=400):
+def fit_font_to_block(draw, text, url_bold, target_height, max_width, min_size=40, max_size=600):
     lo, hi = min_size, max_size
     best = safe_truetype_from_url(url_bold, lo)
     while lo <= hi:
@@ -168,95 +168,99 @@ if submit:
     bg = cover_resize(bg, W, H)
 
     # Overlay escuro e base do desenho
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 120))
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 90))
     canvas = Image.alpha_composite(bg, overlay)
     draw = ImageDraw.Draw(canvas)
 
     # Cor de destaque
     accent_rgb = tuple(int(color_accent.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
-    # Fontes com tamanhos MUITO maiores
+    # Fontes baseadas no template - TAMANHOS GRANDES
     if fmt == "Feed 1080×1350":
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 70)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 95)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 380)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 85)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 75)
-        f_icon = safe_truetype_from_url(FONT_URLS["regular"], 70)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 110)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 50)
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 32)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 48)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 200)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 42)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 38)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 36)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 80)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 28)
+        dest_min, dest_max = 200, 450
     elif fmt == "Quadrado 1080×1080":
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 65)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 88)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 340)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 80)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 70)
-        f_icon = safe_truetype_from_url(FONT_URLS["regular"], 64)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 100)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 46)
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 30)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 44)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 180)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 38)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 34)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 32)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 70)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 26)
+        dest_min, dest_max = 180, 400
     elif fmt == "Wide 1920×1080":
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 75)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 100)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 420)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 90)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 80)
-        f_icon = safe_truetype_from_url(FONT_URLS["regular"], 72)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 115)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 52)
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 36)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 52)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 220)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 46)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 42)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 38)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 85)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 30)
+        dest_min, dest_max = 220, 480
     else:  # Story 1080×1920
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 80)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 110)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 480)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 100)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 85)
-        f_icon = safe_truetype_from_url(FONT_URLS["regular"], 78)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 125)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 56)
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 38)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 56)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 240)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 50)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 44)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 40)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 90)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 32)
+        dest_min, dest_max = 240, 520
 
     # Topo
-    top_y = 40
+    top_y = 50
     draw_centered(draw, "CONSULTOR INDEPENDENTE RNAVT3301", f_top, W // 2, top_y, fill=(255, 255, 255))
-    draw_centered(draw, "iCliGo travel consultant", f_top, W // 2, top_y + 60, fill=(255, 255, 255))
+    draw_centered(draw, "iCliGo travel consultant", f_top, W // 2, top_y + 50, fill=(255, 255, 255))
 
-    # Subtítulo
-    subtitle_y = 260 if fmt == "Feed 1080×1350" else (220 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 360)
-    subtitle_wrapped = "\n".join(textwrap.wrap(subtitle.upper(), width=35))
+    # Subtítulo - ajustar posição baseado no template
+    subtitle_y = 240 if fmt == "Feed 1080×1350" else (200 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 340)
+    subtitle_wrapped = "\n".join(textwrap.wrap(subtitle.upper(), width=40))
     draw_centered(draw, subtitle_wrapped, f_sub, W // 2, subtitle_y, fill=(255, 255, 255))
 
-    # DESTINO (auto-fit)
+    # DESTINO (auto-fit) - o texto mais importante
     dest_text = destination.upper()
-    block_height = 280
-    block_top = 400 if fmt == "Feed 1080×1350" else (340 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 540)
+    block_height = 350  # Aumentado significativamente
+    block_top = 360 if fmt == "Feed 1080×1350" else (300 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 500)
     block_center_y = block_top + block_height // 2
-    f_dest = fit_font_to_block(draw, dest_text, FONT_URLS["bold"], target_height=block_height, max_width=int(W * 0.9), min_size=150, max_size=500)
+    f_dest = fit_font_to_block(draw, dest_text, FONT_URLS["bold"], target_height=block_height, max_width=int(W * 0.95), min_size=dest_min, max_size=dest_max)
     w_dest, h_dest = text_size(draw, dest_text, f_dest)
     dest_y = block_center_y - h_dest // 2
     draw.text((W/2 - w_dest/2, dest_y), dest_text, font=f_dest, fill=accent_rgb)
 
     # Preço
-    price_cx = int(W * 0.72)
-    price_top = 760 if fmt == "Feed 1080×1350" else (640 if fmt.startswith("Quadrado") else (580 if fmt.startswith("Wide") else 1020))
+    price_cx = int(W * 0.75)
+    price_top = 800 if fmt == "Feed 1080×1350" else (680 if fmt.startswith("Quadrado") else (620 if fmt.startswith("Wide") else 1080))
     draw_centered(draw, price_label.upper(), f_plab, price_cx, price_top, fill=(255, 255, 255))
-    _, hp = draw_centered(draw, price, f_price, price_cx, price_top + 70, fill=accent_rgb)
-    draw_centered(draw, price_by.upper(), f_pby, price_cx, price_top + 70 + int(hp * 0.85), fill=(255, 255, 255))
+    _, hp = draw_centered(draw, price, f_price, price_cx, price_top + 60, fill=accent_rgb)
+    draw_centered(draw, price_by.upper(), f_pby, price_cx, price_top + 60 + int(hp * 0.9), fill=(255, 255, 255))
 
     # Ícones / detalhes
-    icons_y = 1080 if fmt == "Feed 1080×1350" else (880 if fmt.startswith("Quadrado") else (880 if fmt.startswith("Wide") else 1540))
+    icons_y = 1120 if fmt == "Feed 1080×1350" else (920 if fmt.startswith("Quadrado") else (920 if fmt.startswith("Wide") else 1600))
     icon_texts = [
-        (f"{origin}\n{dates}", "✈️"),
+        (f"{origin}\n{dates}", "✈"),
         (f"HOTEL\n{hotel}", "🏨"),
-        (meal, "🍽️"),
-        (baggage, "🧳"),
+        (meal, "🍽"),
+        (baggage, "💼"),
         (transfer, "🚐"),
     ]
     n = len(icon_texts)
     spacing = W // n
     for i, (txt, ic) in enumerate(icon_texts):
         xc = spacing * i + spacing // 2
-        draw_centered(draw, ic, f_icon_emoji, xc, icons_y - 90, fill=accent_rgb)
+        draw_centered(draw, ic, f_icon_emoji, xc, icons_y - 100, fill=accent_rgb)
         lines = txt.upper()
         w_lbl, _ = text_size(draw, lines, f_icon)
-        draw.multiline_text((xc - w_lbl/2, icons_y), lines, font=f_icon, fill=(255, 255, 255), align="center", spacing=8)
+        draw.multiline_text((xc - w_lbl/2, icons_y), lines, font=f_icon, fill=(255, 255, 255), align="center", spacing=4)
 
     # Rodapé
     footer_y = 1290 if fmt == "Feed 1080×1350" else (1020 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 1850)
@@ -272,4 +276,4 @@ if submit:
     buf.seek(0)
     st.download_button("⬇️ Fazer download do card (PNG)", data=buf, file_name=outfile_name or "card_viagem.png", mime="image/png")
 
-    st.success("✅ Card gerado com sucesso!")
+    st.success("✅ Card gerado - Layout baseado no template!
