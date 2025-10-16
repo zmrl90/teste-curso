@@ -4,7 +4,7 @@ import requests
 from io import BytesIO
 import textwrap
 
-st.set_page_config(page_title="Gerador de Card - Viagens", layout="centered")
+st.set_page_config(page_title="Template Ofertas", layout="centered")
 
 # --------------------
 # Constantes / Fontes
@@ -94,7 +94,7 @@ def fit_font_to_block(draw, text, url_bold, target_height, max_width, min_size=4
 # --------------------
 # UI
 # --------------------
-st.title("🧳 Gerador de Card de Viagem (template: NÁPOLES)")
+st.title("Template Ofertas")
 
 with st.form("inputs"):
     col_a, col_b = st.columns([2, 1])
