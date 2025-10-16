@@ -181,7 +181,7 @@ if submit:
     scale = 5.2 if "Wide" in fmt else (5.4 if "Story" in fmt else 5.3)
 
     # Fontes (ampliadas proporcionalmente)
-    f_top = safe_truetype_from_url(FONT_URLS["regular"], int((28 if H <= 1350 else 34) * scale))
+    f_top = safe_truetype_from_url(FONT_URLS["regular"], int(32 * scale))
     f_sub = safe_truetype_from_url(FONT_URLS["regular"], int((40 if H <= 1350 else 56) * scale))
     f_price = safe_truetype_from_url(FONT_URLS["bold"], int((260 if W == 1080 and H == 1080 else (280 if fmt.startswith("Feed") or fmt.startswith("Wide") else 320)) * scale))
     f_plab = safe_truetype_from_url(FONT_URLS["semibold"], int((44 if H <= 1080 else 56) * scale))
