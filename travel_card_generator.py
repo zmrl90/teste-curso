@@ -4,7 +4,7 @@ import requests
 from io import BytesIO
 import textwrap
 
-st.set_page_config(page_title="Template Ofertas", layout="centered")
+st.set_page_config(page_title="Gerador de Card - Viagens", layout="centered")
 
 # --------------------
 # Constantes / Fontes
@@ -94,7 +94,7 @@ def fit_font_to_block(draw, text, url_bold, target_height, max_width, min_size=4
 # --------------------
 # UI
 # --------------------
-st.title("Template Ofertas")
+st.title("🧳 Gerador de Card de Viagem (template: NÁPOLES)")
 
 with st.form("inputs"):
     col_a, col_b = st.columns([2, 1])
@@ -177,45 +177,45 @@ if submit:
 
     # Fontes baseadas no template - TAMANHOS GRANDES
     if fmt == "Feed 1080×1350":
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 32)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 48)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 200)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 42)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 38)
-        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 36)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 80)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 28)
-        dest_min, dest_max = 200, 450
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 45)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 65)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 280)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 60)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 52)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 50)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 110)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 40)
+        dest_min, dest_max = 280, 550
     elif fmt == "Quadrado 1080×1080":
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 30)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 44)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 180)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 38)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 34)
-        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 32)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 70)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 26)
-        dest_min, dest_max = 180, 400
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 42)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 60)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 260)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 56)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 48)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 46)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 100)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 36)
+        dest_min, dest_max = 260, 520
     elif fmt == "Wide 1920×1080":
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 36)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 52)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 220)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 46)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 42)
-        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 38)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 85)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 30)
-        dest_min, dest_max = 220, 480
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 50)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 72)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 300)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 65)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 58)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 54)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 120)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 44)
+        dest_min, dest_max = 300, 600
     else:  # Story 1080×1920
-        f_top = safe_truetype_from_url(FONT_URLS["regular"], 38)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 56)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 240)
-        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 50)
-        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 44)
-        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 40)
-        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 90)
-        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 32)
-        dest_min, dest_max = 240, 520
+        f_top = safe_truetype_from_url(FONT_URLS["regular"], 54)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 78)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 340)
+        f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 70)
+        f_pby = safe_truetype_from_url(FONT_URLS["regular"], 62)
+        f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 58)
+        f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 130)
+        f_foot = safe_truetype_from_url(FONT_URLS["regular"], 48)
+        dest_min, dest_max = 340, 650
 
     # Topo
     top_y = 50
@@ -229,7 +229,7 @@ if submit:
 
     # DESTINO (auto-fit) - o texto mais importante
     dest_text = destination.upper()
-    block_height = 350  # Aumentado significativamente
+    block_height = 400  # Aumentado significativamente
     block_top = 360 if fmt == "Feed 1080×1350" else (300 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 500)
     block_center_y = block_top + block_height // 2
     f_dest = fit_font_to_block(draw, dest_text, FONT_URLS["bold"], target_height=block_height, max_width=int(W * 0.95), min_size=dest_min, max_size=dest_max)
@@ -275,4 +275,3 @@ if submit:
     canvas.convert("RGB").save(buf, format="PNG")
     buf.seek(0)
     st.download_button("⬇️ Fazer download do card (PNG)", data=buf, file_name=outfile_name or "card_viagem.png", mime="image/png")
-
