@@ -276,4 +276,3 @@ if submit:
     buf.seek(0)
     st.download_button("⬇️ Fazer download do card (PNG)", data=buf, file_name=outfile_name or "card_viagem.png", mime="image/png")
 
-    st.success("✅ Card gerado - Layout baseado no template!
