@@ -180,18 +180,17 @@ if submit:
     canvas = Image.alpha_composite(bg, overlay)
     draw = ImageDraw.Draw(canvas)
 
-    # Cores
-    accent_rgb = tuple(int(color_accent.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
-
-    # Fontes (tamanhos base — exceto DESTINO que será auto-fit ao bloco de 200px)
-    f_top = safe_truetype_from_url(FONT_URLS["regular"], 28 if H <= 1350 else 34)
-    f_sub = safe_truetype_from_url(FONT_URLS["regular"], 40 if H <= 1350 else 56)
-    f_price = safe_truetype_from_url(FONT_URLS["bold"], 260 if W == 1080 and H == 1080 else (280 if fmt.startswith("Feed") or fmt.startswith("Wide") else 320))
-    f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 44 if H <= 1080 else 56)
-    f_pby = safe_truetype_from_url(FONT_URLS["regular"], 36 if H <= 1080 else 48)
-    f_icon = safe_truetype_from_url(FONT_URLS["regular"], 36 if H <= 1080 else 44)
-    f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 52 if H <= 1080 else 64)
-    f_foot = safe_truetype_from_url(FONT_URLS["regular"], 24 if H <= 1080 else 28)
+  
+    # Fontes (tamanhos reforçados para melhor legibilidade)
+    scale = 1.35  # aumenta todos os tamanhos de forma proporcional
+    f_top = safe_truetype_from_url(FONT_URLS["regular"], int((28 if H <= 1350 else 34) * scale))
+    f_sub = safe_truetype_from_url(FONT_URLS["regular"], int((40 if H <= 1350 else 56) * scale))
+    f_price = safe_truetype_from_url(FONT_URLS["bold"], int((260 if W == 1080 and H == 1080 else (280 if fmt.startswith("Feed") or fmt.startswith("Wide") else 320)) * scale))
+    f_plab = safe_truetype_from_url(FONT_URLS["semibold"], int((44 if H <= 1080 else 56) * scale))
+    f_pby = safe_truetype_from_url(FONT_URLS["regular"], int((36 if H <= 1080 else 48) * scale))
+    f_icon = safe_truetype_from_url(FONT_URLS["regular"], int((36 if H <= 1080 else 44) * scale))
+    f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], int((52 if H <= 1080 else 64) * scale))
+    f_foot = safe_truetype_from_url(FONT_URLS["regular"], int((24 if H <= 1080 else 28) * scale))
 
     # Topo
     top_y = 36 if H <= 1350 else 40
