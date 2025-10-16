@@ -178,44 +178,44 @@ if submit:
     # Fontes baseadas no template - TAMANHOS GRANDES
     if fmt == "Feed 1080×1350":
         f_top = safe_truetype_from_url(FONT_URLS["regular"], 45)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 65)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 280)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 75)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 380)
         f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 60)
         f_pby = safe_truetype_from_url(FONT_URLS["regular"], 52)
         f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 50)
         f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 110)
         f_foot = safe_truetype_from_url(FONT_URLS["regular"], 40)
-        dest_min, dest_max = 280, 550
+        dest_min, dest_max = 400, 850
     elif fmt == "Quadrado 1080×1080":
         f_top = safe_truetype_from_url(FONT_URLS["regular"], 42)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 60)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 260)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 70)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 350)
         f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 56)
         f_pby = safe_truetype_from_url(FONT_URLS["regular"], 48)
         f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 46)
         f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 100)
         f_foot = safe_truetype_from_url(FONT_URLS["regular"], 36)
-        dest_min, dest_max = 260, 520
+        dest_min, dest_max = 380, 800
     elif fmt == "Wide 1920×1080":
         f_top = safe_truetype_from_url(FONT_URLS["regular"], 50)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 72)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 300)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 82)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 420)
         f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 65)
         f_pby = safe_truetype_from_url(FONT_URLS["regular"], 58)
         f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 54)
         f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 120)
         f_foot = safe_truetype_from_url(FONT_URLS["regular"], 44)
-        dest_min, dest_max = 300, 600
+        dest_min, dest_max = 450, 900
     else:  # Story 1080×1920
         f_top = safe_truetype_from_url(FONT_URLS["regular"], 54)
-        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 78)
-        f_price = safe_truetype_from_url(FONT_URLS["bold"], 340)
+        f_sub = safe_truetype_from_url(FONT_URLS["regular"], 88)
+        f_price = safe_truetype_from_url(FONT_URLS["bold"], 460)
         f_plab = safe_truetype_from_url(FONT_URLS["semibold"], 70)
         f_pby = safe_truetype_from_url(FONT_URLS["regular"], 62)
         f_icon = safe_truetype_from_url(FONT_URLS["semibold"], 58)
         f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], 130)
         f_foot = safe_truetype_from_url(FONT_URLS["regular"], 48)
-        dest_min, dest_max = 340, 650
+        dest_min, dest_max = 500, 950
 
     # Topo
     top_y = 50
@@ -229,7 +229,7 @@ if submit:
 
     # DESTINO (auto-fit) - o texto mais importante
     dest_text = destination.upper()
-    block_height = 400  # Aumentado significativamente
+    block_height = 500  # Aumentado significativamente
     block_top = 360 if fmt == "Feed 1080×1350" else (300 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 500)
     block_center_y = block_top + block_height // 2
     f_dest = fit_font_to_block(draw, dest_text, FONT_URLS["bold"], target_height=block_height, max_width=int(W * 0.95), min_size=dest_min, max_size=dest_max)
