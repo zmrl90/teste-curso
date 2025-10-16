@@ -9,29 +9,23 @@ st.set_page_config(page_title="Gerador de Card - Viagens", layout="centered")
 # Helpers
 # --------------------
 def load_font(font_name, size, bold=False):
-    """
-    Carrega Arial (bold ou normal).
-    Em sistemas Unix/Mac, a fonte é normalmente 'Arial.ttf' e 'Arial Bold.ttf'.
-    No Windows, PIL encontra automaticamente.
-    """
+    """Carrega Arial (bold ou normal)."""
     try:
         if bold:
             return ImageFont.truetype("arialbd.ttf", size)
         else:
             return ImageFont.truetype("arial.ttf", size)
     except Exception:
-        # fallback genérico
         return ImageFont.load_default()
 
 def text_size(draw, text, font):
     bbox = draw.textbbox((0, 0), text, font=font)
     return bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-def draw_centered(draw, text, font, x_center, y, fill=(255, 255, 255),
-                  stroke_width=0, stroke_fill=(0, 0, 0)):
+def draw_centered(draw, text, font, x_center, y, fill=(255, 255, 255)):
+    """Desenha texto centrado horizontalmente."""
     w, h = text_size(draw, text, font)
-    draw.text((x_center - w / 2, y), text, font=font, fill=fill,
-              stroke_width=stroke_width, stroke_fill=stroke_fill)
+    draw.text((x_center - w / 2, y), text, font=font, fill=fill)
     return w, h
 
 def fix_exif_orientation(img):
@@ -54,6 +48,7 @@ def fix_exif_orientation(img):
     return img
 
 def cover_resize(img, target_w, target_h):
+    """Redimensiona a imagem para preencher o espaço mantendo proporção."""
     ratio_img = img.width / img.height
     ratio_tar = target_w / target_h
     if ratio_img > ratio_tar:
@@ -70,7 +65,7 @@ def cover_resize(img, target_w, target_h):
 # --------------------
 # UI
 # --------------------
-st.title("🧳 Gerador de Card de Viagem (Arial Edition)")
+st.title("🧳 Gerador de Card de Viagem (Arial, sem contorno)")
 
 with st.form("inputs"):
     col_a, col_b = st.columns([2, 1])
@@ -128,7 +123,7 @@ if submit:
     accent_rgb = tuple(int(color_accent.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
     # --------------------
-    # Fontes
+    # Fontes (Arial)
     # --------------------
     f_top = load_font("arial", int(34 * scale))
     f_sub = load_font("arial", int(54 * scale))
@@ -148,18 +143,15 @@ if submit:
     draw_centered(draw, "iCliGo travel consultant", f_top, W // 2, top_y + int(48 * scale))
 
     subtitle_y = 260 if fmt == "Feed 1080×1350" else (220 if "Quadrado" in fmt or "Wide" in fmt else 360)
-    draw_centered(draw, subtitle.upper(), f_sub, W // 2, subtitle_y,
-                  fill=(255, 255, 255), stroke_width=2, stroke_fill=(0, 0, 0))
+    draw_centered(draw, subtitle.upper(), f_sub, W // 2, subtitle_y)
 
     dest_y = 420 if fmt == "Feed 1080×1350" else (340 if "Quadrado" in fmt else 520)
-    draw_centered(draw, destination.upper(), f_dest, W // 2, dest_y,
-                  fill=accent_rgb, stroke_width=3, stroke_fill=(0, 0, 0))
+    draw_centered(draw, destination.upper(), f_dest, W // 2, dest_y, fill=accent_rgb)
 
     price_cx = int(W * 0.72)
     price_top = 760 if fmt == "Feed 1080×1350" else (620 if "Quadrado" in fmt else 980)
     draw_centered(draw, price_label.upper(), f_plab, price_cx, price_top)
-    _, hp = draw_centered(draw, price, f_price, price_cx, price_top + int(30 * scale),
-                          fill=accent_rgb, stroke_width=3, stroke_fill=(0, 0, 0))
+    _, hp = draw_centered(draw, price, f_price, price_cx, price_top + int(30 * scale), fill=accent_rgb)
     draw_centered(draw, price_by.upper(), f_pby, price_cx,
                   price_top + int(30 * scale) + int(hp * 0.8))
 
@@ -175,8 +167,10 @@ if submit:
     for i, (txt, ic) in enumerate(icons):
         xc = spacing * i + spacing // 2
         draw_centered(draw, ic, f_emoji, xc, icons_y - int(64 * scale), fill=accent_rgb)
-        draw.multiline_text((xc - 100, icons_y), txt.upper(), font=f_icon, fill=(255, 255, 255),
-                            align="center", spacing=int(8 * scale), stroke_width=2, stroke_fill=(0, 0, 0))
+        draw.multiline_text(
+            (xc - 100, icons_y), txt.upper(), font=f_icon, fill=(255, 255, 255),
+            align="center", spacing=int(8 * scale)
+        )
 
     footer_y = 1280 if fmt == "Feed 1080×1350" else (1000 if "Quadrado" in fmt else 1820)
     footer_text = "VALOR BASEADO EM 2 ADULTOS. PREÇOS SUJEITOS A ALTERAÇÕES."
@@ -190,5 +184,6 @@ if submit:
     canvas.convert("RGB").save(buf, format="PNG")
     buf.seek(0)
     st.download_button("⬇️ Fazer download do card (PNG)", data=buf, file_name=outfile_name, mime="image/png")
-    st.success("✅ Card gerado com sucesso — agora com Arial!")
+    st.success("✅ Card gerado com sucesso — agora com Arial e sem contorno!")
+
 
