@@ -7,27 +7,17 @@ import textwrap
 st.set_page_config(page_title="Gerador de Card - Viagens", layout="centered")
 
 # --------------------
-# URLs de fontes (2 CDNs)
+# Constantes / Fontes
 # --------------------
-FONT_SOURCES = {
-    "regular": [
-        "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat-Regular.ttf",
-        "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat-Regular.ttf",
-    ],
-    "semibold": [
-        "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat-SemiBold.ttf",
-        "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat-SemiBold.ttf",
-    ],
-    "bold": [
-        "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat-Bold.ttf",
-        "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat-Bold.ttf",
-    ],
+FONT_URLS = {
+    "regular": "https://github.com/google/fonts/raw/main/ofl/montserrat/Montserrat-Regular.ttf",
+    "semibold": "https://github.com/google/fonts/raw/main/ofl/montserrat/Montserrat-SemiBold.ttf",
+    "bold": "https://github.com/google/fonts/raw/main/ofl/montserrat/Montserrat-Bold.ttf",
 }
 
 # --------------------
 # Helpers
 # --------------------
-@st.cache_data(show_spinner=False)
 def download_bytes(url, timeout=12):
     try:
         r = requests.get(url, timeout=timeout)
@@ -36,30 +26,14 @@ def download_bytes(url, timeout=12):
     except Exception:
         return None
 
-def try_load_truetype_from_urls(url_list, size):
-    for url in url_list:
-        data = download_bytes(url)
-        if data:
-            try:
-                return ImageFont.truetype(BytesIO(data), size=size)
-            except Exception:
-                continue
-    return None  # NÃO voltar ao load_default()
-
-def resolve_font(style_key, size, uploads):
-    """
-    Resolve a fonte pelo upload (se existir) ou pelos CDNs.
-    Se falhar, retorna None (para abortar com mensagem clara).
-    """
-    uploaded = uploads.get(style_key)
-    if uploaded is not None:
+def safe_truetype_from_url(url, size):
+    data = download_bytes(url)
+    if data:
         try:
-            return ImageFont.truetype(uploaded, size=size)
+            return ImageFont.truetype(BytesIO(data), size=size)
         except Exception:
-            st.warning(f"Não foi possível ler a fonte carregada para {style_key}. Vou tentar CDN.")
-    # Tentar CDNs
-    f = try_load_truetype_from_urls(FONT_SOURCES[style_key], size)
-    return f
+            pass
+    return ImageFont.load_default()
 
 def text_size(draw, text, font):
     bbox = draw.textbbox((0, 0), text, font=font, stroke_width=0)
@@ -80,9 +54,12 @@ def fix_exif_orientation(img: Image.Image) -> Image.Image:
         for orientation in ExifTags.TAGS.keys():
             if ExifTags.TAGS[orientation] == 'Orientation':
                 o = exif.get(orientation, None)
-                if o == 3:  return img.rotate(180, expand=True)
-                if o == 6:  return img.rotate(270, expand=True)
-                if o == 8:  return img.rotate(90, expand=True)
+                if o == 3:
+                    return img.rotate(180, expand=True)
+                elif o == 6:
+                    return img.rotate(270, expand=True)
+                elif o == 8:
+                    return img.rotate(90, expand=True)
                 break
     except Exception:
         pass
@@ -102,17 +79,12 @@ def cover_resize(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
     top = (new_h - target_h) // 2
     return img.crop((left, top, left + target_w, top + target_h))
 
-def fit_font_to_block(draw, text, bold_sources, target_height, max_width,
-                      min_size=40, max_size=400, uploads=None):
+def fit_font_to_block(draw, text, url_bold, target_height, max_width, min_size=40, max_size=400):
     lo, hi = min_size, max_size
-    best = resolve_font("bold", lo, uploads)
-    if best is None:
-        return None
+    best = safe_truetype_from_url(url_bold, lo)
     while lo <= hi:
         mid = (lo + hi) // 2
-        f = resolve_font("bold", mid, uploads)
-        if f is None:
-            return None
+        f = safe_truetype_from_url(url_bold, mid)
         w, h = text_size(draw, text, f)
         if h <= target_height and w <= max_width:
             best = f
@@ -164,14 +136,6 @@ with st.form("inputs"):
         outfile_name = st.text_input("Nome do ficheiro para download", "card_viagem.png")
         color_accent = st.color_picker("Cor de destaque (texto & ícones)", "#00ffae")
 
-        st.write("---")
-        scale = st.slider("Tamanho do texto (escala global)", 0.8, 3.0, 2.0, 0.1)
-
-        st.caption("⚙️ Se necessário, faz upload das fontes Montserrat (TTF):")
-        f_upload_reg = st.file_uploader("Montserrat-Regular.ttf (opcional)", type=["ttf"], key="freg")
-        f_upload_sem = st.file_uploader("Montserrat-SemiBold.ttf (opcional)", type=["ttf"], key="fsem")
-        f_upload_bold = st.file_uploader("Montserrat-Bold.ttf (opcional)", type=["ttf"], key="fbold")
-
     submit = st.form_submit_button("🎨 Gerar e Pré-visualizar")
 
 # --------------------
@@ -213,66 +177,47 @@ if submit:
     # Cor de destaque
     accent_rgb = tuple(int(color_accent.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
-    # Map uploads
-    uploads = {"regular": f_upload_reg, "semibold": f_upload_sem, "bold": f_upload_bold}
+    # Escala automática de tamanho de texto
+    scale = 5.2 if "Wide" in fmt else (5.4 if "Story" in fmt else 5.3)
 
-    # ======== CARREGAR FONTES (ABORTAR SE FALHAREM) ========
-    f_top   = resolve_font("regular", int(34 * scale), uploads)
-    f_sub   = resolve_font("semibold", int(54 * scale), uploads)
-    f_price = resolve_font("bold",    int(360 * scale), uploads)
-    f_plab  = resolve_font("semibold", int(72 * scale), uploads)
-    f_pby   = resolve_font("regular",  int(60 * scale), uploads)
-    f_icon  = resolve_font("regular",  int(58 * scale), uploads)
-    f_emoji = resolve_font("semibold", int(86 * scale), uploads)
-    f_foot  = resolve_font("regular",  int(40 * scale), uploads)
-
-    required = [("Topo", f_top), ("Subtítulo", f_sub), ("Preço", f_price),
-                ("Rótulo preço", f_plab), ("Texto abaixo preço", f_pby),
-                ("Ícones texto", f_icon), ("Ícones emoji", f_emoji), ("Rodapé", f_foot)]
-    missing = [name for name, f in required if f is None]
-    if missing:
-        st.error("Não foi possível carregar as fontes TrueType para: " + ", ".join(missing) +
-                 ". Faz upload das TTF ou verifica a ligação aos CDNs.")
-        st.stop()
-    # =======================================================
+    # Fontes (ampliadas proporcionalmente)
+    f_top = safe_truetype_from_url(FONT_URLS["regular"], int(32 * scale))
+    f_sub = safe_truetype_from_url(FONT_URLS["regular"], int((40 if H <= 1350 else 56) * scale))
+    f_price = safe_truetype_from_url(FONT_URLS["bold"], int((260 if W == 1080 and H == 1080 else (280 if fmt.startswith("Feed") or fmt.startswith("Wide") else 320)) * scale))
+    f_plab = safe_truetype_from_url(FONT_URLS["semibold"], int((44 if H <= 1080 else 56) * scale))
+    f_pby = safe_truetype_from_url(FONT_URLS["regular"], int((36 if H <= 1080 else 48) * scale))
+    f_icon = safe_truetype_from_url(FONT_URLS["regular"], int((36 if H <= 1080 else 44) * scale))
+    f_icon_emoji = safe_truetype_from_url(FONT_URLS["semibold"], int((52 if H <= 1080 else 64) * scale))
+    f_foot = safe_truetype_from_url(FONT_URLS["regular"], int((24 if H <= 1080 else 28) * scale))
 
     # Topo
-    top_y = int(28 * scale)
+    top_y = 36 if H <= 1350 else 40
     draw_centered(draw, "CONSULTOR INDEPENDENTE RNAVT3301", f_top, W // 2, top_y, fill=(255, 255, 255))
-    draw_centered(draw, "iCliGo travel consultant", f_top, W // 2, top_y + int(48 * scale), fill=(255, 255, 255))
+    draw_centered(draw, "iCliGo travel consultant", f_top, W // 2, top_y + int(1.6 * (28 if H <= 1350 else 34)), fill=(255, 255, 255))
 
     # Subtítulo
     subtitle_y = 260 if fmt == "Feed 1080×1350" else (220 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 360)
     subtitle_wrapped = "\n".join(textwrap.wrap(subtitle.upper(), width=38))
-    draw_centered(draw, subtitle_wrapped, f_sub, W // 2, subtitle_y, fill=(255, 255, 255),
-                  stroke_width=2, stroke_fill=(0, 0, 0))
+    draw_centered(draw, subtitle_wrapped, f_sub, W // 2, subtitle_y, fill=(255, 255, 255), stroke_width=2, stroke_fill=(0, 0, 0))
 
-    # DESTINO (auto-fit num bloco de 200px)
+    # DESTINO (auto-fit)
     dest_text = destination.upper()
     block_height = 200
     block_top = 380 if fmt == "Feed 1080×1350" else (320 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 520)
     block_center_y = block_top + block_height // 2
-
-    f_dest = fit_font_to_block(draw, dest_text, FONT_SOURCES["bold"],
-                               target_height=block_height, max_width=int(W * 0.9),
-                               min_size=80, max_size=420, uploads=uploads)
-    if f_dest is None:
-        st.error("Não consegui carregar a fonte para o DESTINO. Faz upload da Montserrat-Bold.ttf.")
-        st.stop()
-
+    f_dest = fit_font_to_block(draw, dest_text, FONT_URLS["bold"], target_height=block_height, max_width=int(W * 0.9), min_size=60, max_size=320)
     w_dest, h_dest = text_size(draw, dest_text, f_dest)
     dest_y = block_center_y - h_dest // 2
-    draw.text((W/2 - w_dest/2, dest_y), dest_text, font=f_dest,
-              fill=accent_rgb, stroke_width=3, stroke_fill=(0, 0, 0))
+    draw.text((W/2 - w_dest/2, dest_y), dest_text, font=f_dest, fill=accent_rgb, stroke_width=3, stroke_fill=(0, 0, 0))
 
-    # Preço (direita)
+    # Preço
     price_cx = int(W * 0.72)
     price_top = 720 if fmt == "Feed 1080×1350" else (610 if fmt.startswith("Quadrado") else (560 if fmt.startswith("Wide") else 980))
     draw_centered(draw, price_label.upper(), f_plab, price_cx, price_top, fill=(255, 255, 255))
-    _, hp = draw_centered(draw, price, f_price, price_cx, price_top + int(20 * scale),
+    _, hp = draw_centered(draw, price, f_price, price_cx, price_top + int(0.2 * (44 if H <= 1080 else 56)),
                           fill=accent_rgb, stroke_width=3, stroke_fill=(0, 0, 0))
     draw_centered(draw, price_by.upper(), f_pby, price_cx,
-                  price_top + int(20 * scale) + int(hp * 0.75),
+                  price_top + int(0.2 * (44 if H <= 1080 else 56)) + int(hp * 0.75),
                   fill=(255, 255, 255))
 
     # Ícones / detalhes
@@ -288,11 +233,11 @@ if submit:
     spacing = W // n
     for i, (txt, ic) in enumerate(icon_texts):
         xc = spacing * i + spacing // 2
-        draw_centered(draw, ic, f_emoji, xc, icons_y - int(64 * scale), fill=accent_rgb)
+        draw_centered(draw, ic, f_icon_emoji, xc, icons_y - (52 if H <= 1080 else 64), fill=accent_rgb)
         lines = txt.upper()
         w_lbl, _ = text_size(draw, lines, f_icon)
         draw.multiline_text((xc - w_lbl/2, icons_y), lines, font=f_icon, fill=(255, 255, 255),
-                            align="center", spacing=int(8 * scale), stroke_width=2, stroke_fill=(0, 0, 0))
+                            align="center", spacing=6, stroke_width=2, stroke_fill=(0, 0, 0))
 
     # Rodapé
     footer_y = 1280 if fmt == "Feed 1080×1350" else (1000 if fmt.startswith("Quadrado") or fmt.startswith("Wide") else 1820)
@@ -308,4 +253,6 @@ if submit:
     buf.seek(0)
     st.download_button("⬇️ Fazer download do card (PNG)", data=buf, file_name=outfile_name or "card_viagem.png", mime="image/png")
 
-    st.success("✅ Card gerado. (Se o texto ainda parecer pequeno, aumenta a 'Escala do texto'.)")
+    st.success("✅ Card gerado com sucesso — textos ampliados e layout otimizado.")
+
+
