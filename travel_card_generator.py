@@ -178,7 +178,7 @@ if submit:
     accent_rgb = tuple(int(color_accent.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
     # Escala automática de tamanho de texto
-    scale = 1.2 if "Wide" in fmt else (1.4 if "Story" in fmt else 1.3)
+    scale = 2.2 if "Wide" in fmt else (2.4 if "Story" in fmt else 2.3)
 
     # Fontes (ampliadas proporcionalmente)
     f_top = safe_truetype_from_url(FONT_URLS["regular"], int((28 if H <= 1350 else 34) * scale))
